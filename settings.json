@@ -1,11 +1,1 @@
-{
-  "theme_color": "#e3f2fd",
-  "default_matches_per_team": 1,
-  "randomize_schedule": true,
-  "dark_mode": false,
-  "notification_sound": false,
-  "font_size": 12,
-  "highlight_color": "#90caf9",
-  "autosave_interval": 30,
-  "https_server_ip": "192.168.10.165:5000"
-}
+{"theme_color": "#e3f2fd", "default_matches_per_team": 1, "randomize_schedule": true, "dark_mode": false, "notification_sound": false, "font_size": 12, "highlight_color": "#90caf9", "autosave_interval": 30, "https_server_ip": "192.168.10.165:5000"}

@@ -20,22 +20,67 @@ def export_games_to_excel(games, filename):
         ws.cell(row=1, column=col).font = Font(bold=True)
         ws.cell(row=1, column=col).fill = PatternFill(start_color='FFD700', end_color='FFD700', fill_type='solid')
 
+    # Add game data
     for game in games:
+        row = []
         game_number = game.get('GameNumber', '')
         timestamp = game.get('timestamp', '')
         t1 = game.get('Team1', {})
         t2 = game.get('Team2', {})
-        row = [
+        
+        row.extend([
             game_number,
             timestamp,
-            t1.get('Name', ''), t1.get('Score', ''), t1.get('OrangeBalls', ''), t1.get('PurpleBalls', ''),
-            t2.get('Name', ''), t2.get('Score', ''), t2.get('OrangeBalls', ''), t2.get('PurpleBalls', '')
-        ]
+            t1.get('Name', ''),
+            t1.get('Score', ''),
+            t1.get('Orange', ''),
+            t1.get('Purple', ''),
+            t2.get('Name', ''),
+            t2.get('Score', ''),
+            t2.get('Orange', ''),
+            t2.get('Purple', '')
+        ])
+        
         ws.append(row)
-        # Highlight winner
-        if t1.get('Score', 0) > t2.get('Score', 0):
-            ws.cell(row=ws.max_row, column=3).fill = PatternFill(start_color='90EE90', end_color='90EE90', fill_type='solid')
-        elif t2.get('Score', 0) > t1.get('Score', 0):
-            ws.cell(row=ws.max_row, column=7).fill = PatternFill(start_color='90EE90', end_color='90EE90', fill_type='solid')
+        
+    # Save workbook
+    wb.save(filename)
 
-    wb.save(filename) 
+def export_excel():
+    """Export all games to Excel"""
+    from data.mongodb_client import collection
+    from tkinter import filedialog
+    games = list(collection.find())
+    if not games:
+        return None
+    
+    filename = filedialog.asksaveasfilename(
+        defaultextension='.xlsx',
+        filetypes=[('Excel files', '*.xlsx')]
+    )
+    if not filename:
+        return None
+        
+    export_games_to_excel(games, filename)
+    return filename
+
+def export_schedule_csv(schedule):
+    """Export the schedule to a CSV file"""
+    from tkinter import filedialog
+    filename = filedialog.asksaveasfilename(
+        defaultextension='.csv',
+        filetypes=[('CSV files', '*.csv')]
+    )
+    if not filename:
+        return None
+        
+    with open(filename, 'w') as f:
+        f.write('Match,Team 1,Team 2,Played\n')
+        for i, m in enumerate(schedule['matches']):
+            team1 = m['team1']
+            team2 = m['team2']
+            played = 'Yes' if m['played'] else 'No'
+            f.write(f'{i+1},{team1},{team2},{played}\n')
+            
+    return filename
+

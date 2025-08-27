@@ -5,11 +5,11 @@ Games tab functionality for the tournament application.
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog, simpledialog
 from datetime import datetime
+from data.db_utils import sync_scores_from_mongodb
 from core.match_scheduler import (
-    get_match, set_match_played, set_match_penalty, set_match_comment, get_match_comment,
-    save_schedule_to_file, load_schedule_from_file, get_match_data,
-    set_match_penalty_for_team, set_match_status, set_match_referee, set_match_comment_data,
-    add_comment_to_history, save_schedule, sync_scores_from_mongodb
+    get_match, set_match_played, set_match_penalty,
+    set_match_comment, get_match_comment, save_schedule,
+    load_schedule
 )
 
 MATCH_STATUSES = ['Not Started', 'In Progress', 'Completed', 'Cancelled', 'Postponed']
@@ -136,37 +136,48 @@ class GamesTab:
                 self.scheduled_tree.insert('', 'end', values=vals)
 
     def show_sched_menu(self, event):
+        if not self.scheduled_tree:
+            return
         iid = self.scheduled_tree.identify_row(event.y)
         if iid:
             self.scheduled_tree.selection_set(iid)
             self.sched_menu.tk_popup(event.x_root, event.y_root)
 
     def show_comp_menu(self, event):
+        if not self.completed_tree:
+            return
         iid = self.completed_tree.identify_row(event.y)
         if iid:
             self.completed_tree.selection_set(iid)
             self.comp_menu.tk_popup(event.x_root, event.y_root)
 
     def view_comment_scheduled(self):
+        if not self.scheduled_tree:
+            return
         sel = self.scheduled_tree.selection()
         if not sel:
             return
         idx = int(self.scheduled_tree.item(sel[0])['values'][0])
-        comment = get_match_comment(idx)
+        comment = get_match_comment(self.schedule, idx)
         messagebox.showinfo('Comment', comment if comment else 'No comment.')
 
     def edit_comment_scheduled(self):
+        if not self.scheduled_tree:
+            return
         sel = self.scheduled_tree.selection()
         if not sel:
             return
         idx = int(self.scheduled_tree.item(sel[0])['values'][0])
-        current = get_match_comment(idx)
+        current = get_match_comment(self.schedule, idx)
         new_comment = simpledialog.askstring('Edit Comment', 'Enter comment:', initialvalue=current)
         if new_comment is not None:
             # Save old comment to history if changed
             if new_comment != current:
-                add_comment_to_history(idx, current, datetime.now())
-            set_match_comment(idx, new_comment)
+                self.schedule['matches'][idx]['comment_history'].append({
+                    'comment': current,
+                    'timestamp': datetime.now().isoformat()
+                })
+            set_match_comment(self.schedule, idx, new_comment)
             self.refresh_games_trees()
 
     def edit_status_scheduled(self):
@@ -209,25 +220,171 @@ class GamesTab:
         tk.Button(btn_frame, text='Apply', command=apply_status).pack(side='left', padx=5)
         tk.Button(btn_frame, text='Cancel', command=cancel).pack(side='left', padx=5)
 
+    def toggle_played_scheduled(self):
+        if not self.scheduled_tree:
+            return
+        sel = self.scheduled_tree.selection()
+        if not sel:
+            return
+        idx = int(self.scheduled_tree.item(sel[0])['values'][0])
+        match = get_match(self.schedule, idx)
+        set_match_played(self.schedule, idx, not match.get('played', False))
+        self.refresh_games_trees()
+
+    def toggle_penalty_scheduled(self, team_num):
+        if not self.scheduled_tree:
+            return
+        sel = self.scheduled_tree.selection()
+        if not sel:
+            return
+        idx = int(self.scheduled_tree.item(sel[0])['values'][0])
+        match = get_match(self.schedule, idx)
+        penalty_key = f"penalty_team{team_num}"
+        current_penalty = match.get(penalty_key, False)
+        set_match_penalty(self.schedule, idx, team_num, not current_penalty)
+        self.refresh_games_trees()
+
+    def edit_referee_scheduled(self):
+        if not self.scheduled_tree:
+            return
+        self._edit_referee(self.scheduled_tree)
+
+    def edit_referee_completed(self):
+        if not self.completed_tree:
+            return
+        self._edit_referee(self.completed_tree)
+
+    def _edit_referee(self, tree):
+        if not tree:
+            return
+        sel = tree.selection()
+        if not sel:
+            return
+        idx = int(tree.item(sel[0])['values'][0])
+        current = self.schedule['matches'][idx].get('referee', '')
+        new_referee = simpledialog.askstring('Edit Referee', 'Enter referee:', initialvalue=current)
+        if new_referee is not None:
+            self.schedule['matches'][idx]['referee'] = new_referee
+            self.refresh_games_trees()
+
+    def edit_scores_scheduled(self):
+        if not self.scheduled_tree:
+            return
+        self._edit_scores(self.scheduled_tree)
+
+    def edit_scores_completed(self):
+        if not self.completed_tree:
+            return
+        self._edit_scores(self.completed_tree)
+
+    def _edit_scores(self, tree):
+        if not tree:
+            return
+        sel = tree.selection()
+        if not sel:
+            return
+        idx = int(tree.item(sel[0])['values'][0])
+        match = self.schedule['matches'][idx]
+        current_score1 = match.get('score1', '')
+        current_score2 = match.get('score2', '')
+        
+        dialog = tk.Toplevel(self.parent)
+        dialog.title('Edit Scores')
+        dialog.transient(self.parent)
+        dialog.grab_set()
+        
+        tk.Label(dialog, text=f"{match['team1']} Score:").pack(pady=5)
+        score1_var = tk.StringVar(value=str(current_score1))
+        tk.Entry(dialog, textvariable=score1_var).pack(pady=5)
+        
+        tk.Label(dialog, text=f"{match['team2']} Score:").pack(pady=5)
+        score2_var = tk.StringVar(value=str(current_score2))
+        tk.Entry(dialog, textvariable=score2_var).pack(pady=5)
+        
+        def apply_scores():
+            try:
+                new_score1 = int(score1_var.get())
+                new_score2 = int(score2_var.get())
+                self.schedule['matches'][idx]['score1'] = new_score1
+                self.schedule['matches'][idx]['score2'] = new_score2
+                self.refresh_games_trees()
+                dialog.destroy()
+            except ValueError:
+                messagebox.showerror('Error', 'Please enter valid numbers for scores.')
+        
+        def cancel():
+            dialog.destroy()
+        
+        btn_frame = tk.Frame(dialog)
+        btn_frame.pack(pady=10)
+        tk.Button(btn_frame, text='Apply', command=apply_scores).pack(side='left', padx=5)
+        tk.Button(btn_frame, text='Cancel', command=cancel).pack(side='left', padx=5)
+
+    def set_next_up_scheduled(self):
+        if not self.scheduled_tree:
+            return
+        self._set_next_up(self.scheduled_tree)
+
+    def set_next_up_completed(self):
+        if not self.completed_tree:
+            return
+        self._set_next_up(self.completed_tree)
+
+    def _set_next_up(self, tree):
+        if not tree:
+            return
+        sel = tree.selection()
+        if not sel:
+            return
+        idx = int(tree.item(sel[0])['values'][0])
+        # Reset all next_up flags
+        for match in self.schedule['matches']:
+            match['next_up'] = False
+        # Set selected match as next_up
+        self.schedule['matches'][idx]['next_up'] = True
+        self.refresh_games_trees()
+
+    def view_comment_completed(self):
+        if not self.completed_tree:
+            return
+        sel = self.completed_tree.selection()
+        if not sel:
+            return
+        idx = int(self.completed_tree.item(sel[0])['values'][0])
+        comment = get_match_comment(self.schedule, idx)
+        messagebox.showinfo('Comment', comment if comment else 'No comment.')
+
+    def edit_comment_completed(self):
+        if not self.completed_tree:
+            return
+        sel = self.completed_tree.selection()
+        if not sel:
+            return
+        idx = int(self.completed_tree.item(sel[0])['values'][0])
+        current = get_match_comment(self.schedule, idx)
+        new_comment = simpledialog.askstring('Edit Comment', 'Enter comment:', initialvalue=current)
+        if new_comment is not None:
+            set_match_comment(self.schedule, idx, new_comment)
+            self.refresh_games_trees()
+
     def save_games_schedule(self, show_popup=True):
         if not self.schedule or not self.schedule.get('matches'):
             if show_popup:
                 messagebox.showwarning('No Schedule', 'No schedule to save.')
             return
-        save_schedule_to_file(self.schedule)
+        save_schedule(self.schedule)
         if show_popup:
             messagebox.showinfo('Saved', 'Schedule overwritten and saved to file.')
 
     def load_schedule_from_file(self):
-        file_path = filedialog.askopenfilename(filetypes=[('JSON Files', '*.json')])
-        if not file_path:
-            return
         try:
-            self.schedule = load_schedule_from_file(file_path)
-            # Rebuild the Games tab
-            for widget in self.parent.winfo_children():
-                widget.destroy()
-            self.create_widgets()
+            loaded_schedule = load_schedule()
+            if loaded_schedule:
+                self.schedule = loaded_schedule
+                # Rebuild the Games tab
+                for widget in self.parent.winfo_children():
+                    widget.destroy()
+                self.create_widgets()
             messagebox.showinfo('Loaded', 'Schedule loaded successfully.')
         except Exception as e:
             messagebox.showerror('Error', f'Failed to load schedule: {e}')

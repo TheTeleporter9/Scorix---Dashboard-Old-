@@ -3,27 +3,73 @@ Application state and shared functionality.
 """
 
 import json
+from typing import Dict, List, Any, Optional, Union, TypedDict, cast
 from datetime import datetime
-from data.mongodb_client import get_all_games, collection as main_collection
+from data.db_utils import (
+    get_all_games, get_db_collection, sync_scores_from_mongodb,
+    update_mongodb_from_schedule, publish_display_data,
+    get_all_teams_from_schedule_and_games
+)
 from core.match_scheduler import (
-    load_schedule, save_schedule, add_team, remove_team, set_num_matches,
-    generate_round_robin, get_match, set_match_played, set_match_penalty,
-    set_match_comment, get_match_comment
+    load_schedule, save_schedule, add_team, remove_team,
+    generate_round_robin, get_match_data as get_match, set_match_played,
+    set_match_comment_data as set_match_comment, get_match_comment_data as get_match_comment,
+    add_comment_to_history, Schedule
 )
 from core.team_notes import save_team_notes, load_team_notes
+from utils.type_utils import ensure_dict
 
-# Add a new MongoDB collection for live announcements
-LIVE_ANNOUNCE_COLLECTION = 'live_announcement'
-live_announce_collection = main_collection.database[LIVE_ANNOUNCE_COLLECTION]
+class Settings(TypedDict, total=True):
+    """TypedDict for application settings.
+    All fields are required and have defaults in utils.settings.
+    """
+    theme_color: str
+    default_matches_per_team: int
+    randomize_schedule: bool
+    dark_mode: bool
+    notification_sound: bool
+    font_size: int
+    highlight_color: str
+    auto_refresh_interval: int
+    display_update_interval: int
+
+from utils.settings import load_settings as load_settings_with_defaults
 
 class AppState:
     def __init__(self):
-        self.schedule = {}
-        self.settings = {}
-        self.display_update_interval = 30 * 1000  # 30 seconds
-        self.display_update_job = None
-        self.auto_refresh_enabled = True
-        self.auto_refresh_interval = 30  # seconds
+        self._schedule: Schedule = ensure_dict(load_schedule(), Schedule)
+        settings_dict = load_settings_with_defaults()
+        self._settings: Settings = cast(Settings, ensure_dict(settings_dict, Settings))
+        self.tournament_data: List[Dict[str, Any]] = []
+        self.finals_data: Optional[Dict[str, Any]] = None
+        
+        # Use the default interval from settings
+        self.display_update_interval: int = self._settings['display_update_interval'] * 1000  # ms
+        self.display_update_job: Optional[Any] = None
+        self.auto_refresh_enabled: bool = True
+        self.auto_refresh_interval: int = self._settings['auto_refresh_interval']  # seconds
+    
+    @property
+    def settings(self) -> Settings:
+        """Safe access to settings with defaults."""
+        return self._settings
+    
+    @settings.setter
+    def settings(self, value: Dict[str, Any]) -> None:
+        self._settings = ensure_dict(value, Settings)
+    
+    @property
+    def schedule(self) -> Schedule:
+        """Safe access to schedule."""
+        return self._schedule
+    
+    @schedule.setter
+    def schedule(self, value: Dict[str, Any]) -> None:
+        self._schedule = ensure_dict(value, Schedule)
+    
+    def get_setting(self, key: str, default: Any = None) -> Any:
+        """Safely get a setting value with a default."""
+        return self.settings.get(key, default)
 
 def load_settings():
     try:
@@ -70,7 +116,8 @@ def update_mongodb_from_schedule(schedule):
                     'Score': match.get('score2', 0)
                 }
             }
-            main_collection.update_one(
+            collection = get_db_collection('gamescores')
+            collection.update_one(
                 {'GameNumber': match.get('match_id')},
                 {'$set': game_data},
                 upsert=True

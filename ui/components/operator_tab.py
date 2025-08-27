@@ -3,11 +3,12 @@ Operator tab functionality for the tournament application.
 """
 
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 from core.match_scheduler import (
     add_team, remove_team, set_num_matches, generate_round_robin,
-    save_schedule, load_team_notes, save_team_notes
+    save_schedule
 )
+from core.team_notes import load_team_notes, save_team_notes
 
 class OperatorTab:
     def __init__(self, parent, app_state):
@@ -16,6 +17,10 @@ class OperatorTab:
         self.schedule = app_state.schedule
         self.settings = app_state.settings
         self.create_widgets()
+        
+    def refresh_data(self):
+        """Refresh the operator tab data."""
+        pass  # No data needs to be refreshed in this tab
 
     def create_widgets(self):
         # CJM label in corner

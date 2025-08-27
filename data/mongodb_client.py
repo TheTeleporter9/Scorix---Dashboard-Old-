@@ -11,12 +11,14 @@ MONGO_URI = 'mongodb+srv://TheTeleporter9:JTMdX9HFCllYRJDX@wro-scoring.n0khn.mon
 DB_NAME = 'Wro-scoring'
 COLLECTION_NAME = 'gamescores'
 DISPLAY_COLLECTION = 'competition_display'
+LIVE_ANNOUNCE_COLLECTION = 'live_announcements'
 SCHEDULE_FILE = 'schedule.json'
 
 client = MongoClient(MONGO_URI)
 db = client[DB_NAME]
 collection = db[COLLECTION_NAME]
 display_collection = db[DISPLAY_COLLECTION]
+live_announce_collection = db[LIVE_ANNOUNCE_COLLECTION]
 
 # ---------------- FastAPI Setup ----------------
 app = FastAPI()

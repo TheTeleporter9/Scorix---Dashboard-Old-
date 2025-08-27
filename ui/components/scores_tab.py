@@ -5,8 +5,12 @@ Scores tab functionality for the tournament application.
 import tkinter as tk
 from tkinter import ttk, messagebox
 from utils.excel_exporter import export_games_to_excel
-from data.mongodb_client import publish_display_data
-from .app_state import sync_scores_from_mongodb, get_all_teams_from_schedule_and_games
+from data.db_utils import (
+    sync_scores_from_mongodb,
+    get_all_teams_from_schedule_and_games,
+    publish_display_data,
+    get_all_games
+)
 
 class ScoresTab:
     def __init__(self, parent, app_state):
@@ -94,7 +98,6 @@ class ScoresTab:
         team_scores = {team: 0 for team in all_teams if team}
 
         # Update games tree and calculate scores
-        from data.mongodb_client import get_all_games
         games = get_all_games()
         for g in reversed(games):
             t1 = g.get('Team1', {})
@@ -154,7 +157,8 @@ class ScoresTab:
         self.leaderboard_tree.tag_configure('leader', background='#fffacd')
 
     def export_excel(self):
-        filename = export_games_to_excel()
+        games = get_all_games()
+        filename = export_games_to_excel(games=games, filename="tournament_scores.xlsx")
         messagebox.showinfo('Exported', f'Exported to {filename}')
 
     def upload_display_now(self):

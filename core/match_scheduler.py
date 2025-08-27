@@ -3,7 +3,53 @@ import os
 from itertools import combinations
 import random
 
+"""Match scheduler with type hints."""
+
+from typing import Dict, List, Union, Any, Optional, TypedDict
+from datetime import datetime
+import random
+import os
+import json
+
 SCHEDULE_FILE = 'schedule.json'
+
+# Type definitions
+class MatchComment(TypedDict):
+    comment: str
+    timestamp: str
+
+class Match(TypedDict):
+    team1: str
+    team2: str
+    played: bool
+    penalty_team1: bool
+    penalty_team2: bool
+    comments: str
+    comment_history: List[MatchComment]
+    created: str
+
+class Schedule(TypedDict):
+    teams: List[str]
+    matches: List[Match]
+
+__all__ = [
+    'MatchComment', 'Match', 'Schedule',
+    'load_schedule', 'save_schedule',
+    'add_team', 'remove_team',
+    'get_match_data', 'set_match_played',
+    'set_match_comment_data', 'get_match_comment_data',
+    'add_comment_to_history'
+]
+
+# Match Status Constants
+MATCH_STATUSES = [
+    'Not Played',
+    'Waiting',
+    'In Progress',
+    'Completed',
+    'Cancelled',
+    'Postponed'
+]
 
 def load_schedule():
     """Load the schedule from file. If invalid or missing, return an empty schedule."""
@@ -32,19 +78,62 @@ def generate_round_robin(teams, num_matches=1, randomize=True):
     return matches
 
 def add_team(schedule, team_name, randomize=True):
+    """Add a team to the schedule"""
     if team_name not in schedule['teams']:
         schedule['teams'].append(team_name)
-        schedule['matches'] = generate_round_robin(schedule['teams'], get_num_matches(schedule), randomize)
+        num_matches = get_num_matches(schedule)
+        schedule['matches'] = generate_round_robin(schedule['teams'], num_matches, randomize)
+        save_schedule(schedule)
 
 def remove_team(schedule, team_name, randomize=True):
+    """Remove a team from the schedule"""
     if team_name in schedule['teams']:
         schedule['teams'].remove(team_name)
-        schedule['matches'] = generate_round_robin(schedule['teams'], get_num_matches(schedule), randomize)
+        num_matches = get_num_matches(schedule)
+        schedule['matches'] = generate_round_robin(schedule['teams'], num_matches, randomize)
+        save_schedule(schedule)
+
+def set_match_comment_data(idx, comment, schedule):
+    """Set comment for a match"""
+    if 0 <= idx < len(schedule['matches']):
+        schedule['matches'][idx]['comments'] = comment
+        save_schedule(schedule)
+
+def set_match_played(schedule: Schedule, idx: int, played: bool) -> None:
+    """Set whether a match has been played"""
+    if 0 <= idx < len(schedule['matches']):
+        schedule['matches'][idx]['played'] = played
+        save_schedule(schedule)
+
+def get_match_data(idx, schedule):
+    """Get match data by index"""
+    if 0 <= idx < len(schedule['matches']):
+        return schedule['matches'][idx]
+    return None
+
+def get_match_comment_data(idx, schedule):
+    """Get comment for a match."""
+    if 0 <= idx < len(schedule['matches']):
+        return schedule['matches'][idx].get('comments', '')
+    return ''
+
+def add_comment_to_history(idx, comment, timestamp, schedule):
+    """Add a comment to match history."""
+    if 0 <= idx < len(schedule['matches']):
+        history = schedule['matches'][idx].get('comment_history', [])
+        history.append({
+            'comment': comment,
+            'timestamp': timestamp
+        })
+        schedule['matches'][idx]['comment_history'] = history
+        save_schedule(schedule)
 
 def get_num_matches(schedule):
     if not schedule['matches']:
         return 1
     teams = schedule['teams']
+    if not teams:
+        return 1
     n = len([m for m in schedule['matches'] if m['team1'] == teams[0]])
     return max(1, n)
 
