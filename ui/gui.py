@@ -1,37 +1,24 @@
-# This file has been split into multiple modules for clarity and maintainability.
-# All GUI elements remain in this file, but functionality has been moved to gui_modules/
+"""
+Tournament GUI application main file.
+"""
 
 import tkinter as tk
-from tkinter import ttk, messagebox, simpledialog, filedialog
-from data.mongodb_client import get_all_games, collection as main_collection, publish_display_data
-from core.tournament_logic import get_next_game, get_leaderboard
-from utils.excel_exporter import export_games_to_excel
+from tkinter import ttk, messagebox
+from PIL import Image, ImageTk
 from datetime import datetime
-from core.match_scheduler import (
-    load_schedule, save_schedule, add_team, remove_team, set_num_matches, generate_round_robin,
-    get_match, set_match_played, set_match_penalty, set_match_comment, get_match_comment
-)
-import json
-import os
-from pymongo import MongoClient
-from PIL import Image, ImageTk  # Requires pillow
+from core.match_scheduler import load_schedule, save_schedule
+from ui.components.app_state import AppState, load_settings, save_settings
+from ui.components.scores_tab import ScoresTab
+from ui.components.operator_tab import OperatorTab
+from ui.components.games_tab import GamesTab
+from ui.components.settings_tab import SettingsTab
+from ui.components.comment_history_tab import CommentHistoryTab
+from ui.components.finals_bracket import FinalsBracket
 
 # Import the new modular functionality
-from core.gui_modules import (
+from ui.components.app_state import (
     load_settings, save_settings, load_comp_display_settings, save_comp_display_settings,
-    refresh_tournament_data, export_excel, export_schedule_csv,
-    add_team_to_schedule, remove_team_from_schedule, set_matches_per_team, auto_generate_schedule,
-    get_teams_list, save_team_notes, load_team_notes,
-    get_match_data, set_match_status, set_match_penalty_for_team, set_match_referee,
-    set_match_scores, set_next_up_match, get_matches_list, save_schedule_to_file,
-    load_schedule_from_file, get_next_up_match_from_schedule, MATCH_STATUSES, REFEREES,
-    set_match_comment_data, get_match_comment_data, add_comment_to_history,
-    get_comment_history, get_team_comment_history, clear_comment_history,
-    delete_comment_from_history,
-    get_top_teams_for_finals, create_finals_schedule, set_finals_match_winner,
-    save_finals_schedule, load_finals_schedule,
-    sync_scores_from_mongodb, update_mongodb_from_schedule,
-    get_all_teams_from_schedule_and_games, get_team_scores_for_finals
+    update_mongodb_from_schedule, sync_scores_from_mongodb, get_all_teams_from_schedule_and_games
 )
 
 print('Starting Tournament GUI...')
@@ -42,12 +29,17 @@ live_announce_collection = main_collection.database[LIVE_ANNOUNCE_COLLECTION]
 
 # CJM
 class TournamentApp(tk.Tk):
-    # CJM
     def __init__(self):
         print('Initializing TournamentApp...')
         super().__init__()
         self.title('SCORIX')
-        # Load logo image (user must place 'scorix_logo.png' in the project directory)
+        
+        # Initialize application state
+        self.app_state = AppState()
+        self.app_state.settings = load_settings()
+        self.app_state.schedule = load_schedule()
+        
+        # Load logo image
         try:
             logo_img = Image.open('scorix_logo.png').resize((120, 120))
             self.logo_img = ImageTk.PhotoImage(logo_img)
@@ -55,16 +47,15 @@ class TournamentApp(tk.Tk):
         except Exception as e:
             print('Logo image not found or failed to load:', e)
             self.logo_img = None
-        self.settings = load_settings()
+
         self.apply_theme()
-        self.schedule = load_schedule()
         self.create_logo_top_right()
         self.create_widgets()
-        self.refresh_data()
         self.protocol('WM_DELETE_WINDOW', self.on_close)
+        
         # Start periodic display data publishing
-        self.display_update_interval = 30 * 1000  # 30 seconds in milliseconds
-        self.display_update_job = None
+        self.app_state.display_update_interval = 30 * 1000  # 30 seconds
+        self.app_state.display_update_job = None
         self.schedule_display_update()
 
     def create_logo_top_right(self):
@@ -102,26 +93,35 @@ class TournamentApp(tk.Tk):
     def create_widgets(self):
         self.notebook = ttk.Notebook(self)
         self.notebook.pack(fill='both', expand=True)
+        
         # Scores tab
-        self.scores_frame = tk.Frame(self.notebook, bg=self.settings['theme_color'])
+        self.scores_frame = tk.Frame(self.notebook, bg=self.app_state.settings['theme_color'])
         self.notebook.add(self.scores_frame, text='🏆 Scores')
-        self.create_scores_tab(self.scores_frame)
+        self.scores_tab = ScoresTab(self.scores_frame, self.app_state)
+        
         # Operator tab
-        self.operator_frame = tk.Frame(self.notebook, bg=self.settings['theme_color'])
+        self.operator_frame = tk.Frame(self.notebook, bg=self.app_state.settings['theme_color'])
         self.notebook.add(self.operator_frame, text='🛠️ Operator')
-        self.create_operator_tab(self.operator_frame)
+        self.operator_tab = OperatorTab(self.operator_frame, self.app_state)
+        
         # Games tab
-        self.games_frame = tk.Frame(self.notebook, bg=self.settings['theme_color'])
+        self.games_frame = tk.Frame(self.notebook, bg=self.app_state.settings['theme_color'])
         self.notebook.add(self.games_frame, text='🎮 Games')
-        self.create_games_tab(self.games_frame)
+        self.games_tab = GamesTab(self.games_frame, self.app_state)
+        
         # Comment History tab
-        self.comment_history_frame = tk.Frame(self.notebook, bg=self.settings['theme_color'])
+        self.comment_history_frame = tk.Frame(self.notebook, bg=self.app_state.settings['theme_color'])
         self.notebook.add(self.comment_history_frame, text='📝 Comment History')
-        self.create_comment_history_tab(self.comment_history_frame)
+        self.comment_history_tab = CommentHistoryTab(self.comment_history_frame, self.app_state)
+        
         # Settings tab
-        self.settings_frame = tk.Frame(self.notebook, bg=self.settings['theme_color'])
+        self.settings_frame = tk.Frame(self.notebook, bg=self.app_state.settings['theme_color'])
         self.notebook.add(self.settings_frame, text='⚙️ Settings')
-        self.create_settings_tab(self.settings_frame)
+        self.settings_tab = SettingsTab(self.settings_frame, self.app_state)
+        
+        # Bind tab change events
+        self.notebook.bind('<<NotebookTabChanged>>', self.on_tab_changed)
+        self._last_tab = None
 
     def create_scores_tab(self, parent):
         # CJM label in corner
@@ -403,27 +403,17 @@ class TournamentApp(tk.Tk):
     def on_tab_changed(self, event):
         tab = self.notebook.select()
         tab_text = self.notebook.tab(tab, 'text')
-        # Autosave when leaving Games tab (no popup)
-        if self._last_tab == '🎮 Games':
-            self.save_games_schedule(show_popup=False)
-        # Only refresh data, never recreate widgets
-        if tab_text == '🎮 Games':
-            # Automatically set next_up for the first unplayed match
-            updated = False
-            for i, m in enumerate(self.schedule.get('matches', [])):
-                if not m.get('played', False) and not updated:
-                    m['next_up'] = True
-                    updated = True
-                else:
-                    m['next_up'] = False
-            save_schedule(self.schedule)
-            self.after(100, self.refresh_games_trees)
+        
+        # Update current tab's data
+        if tab_text == '� Scores':
+            self.scores_tab.refresh_data()
         elif tab_text == '🛠️ Operator':
-            self.after(100, self.refresh_operator_data)
+            self.operator_tab.refresh_data()
+        elif tab_text == '🎮 Games':
+            self.games_tab.refresh_games_trees()
         elif tab_text == '📝 Comment History':
-            self.after(100, self.refresh_comment_history)
-        elif tab_text == '🏆 Scores':
-            self.after(100, self.refresh_data)
+            self.comment_history_tab.refresh_comment_history()
+        
         self._last_tab = tab_text
 
     def view_comment_scheduled(self):
@@ -890,9 +880,13 @@ class TournamentApp(tk.Tk):
 
     def schedule_display_update(self):
         # Schedule the next display data update
-        self.display_update_job = self.after(self.display_update_interval, self.periodic_display_update)
+        self.app_state.display_update_job = self.after(
+            self.app_state.display_update_interval, 
+            self.periodic_display_update
+        )
 
     def periodic_display_update(self):
+        from data.mongodb_client import publish_display_data
         try:
             publish_display_data()
         except Exception as e:
@@ -900,25 +894,24 @@ class TournamentApp(tk.Tk):
         self.schedule_display_update()
 
     def on_close(self):
-        # Stop auto-refresh
-        if hasattr(self, 'auto_refresh_enabled'):
-            self.auto_refresh_enabled = False
         # Cancel display update job
-        if self.display_update_job is not None:
-            self.after_cancel(self.display_update_job)
-            self.display_update_job = None
+        if self.app_state.display_update_job is not None:
+            self.after_cancel(self.app_state.display_update_job)
+            self.app_state.display_update_job = None
         
-        result = messagebox.askyesnocancel('Save Before Exiting', 'Do you want to save all changes before exiting?')
+        result = messagebox.askyesnocancel('Save Before Exiting', 
+                                        'Do you want to save all changes before exiting?')
         if result is None:
             return  # Cancel: do not close
         if result:
-            save_settings(self.settings)
-            self.save_games_schedule(show_popup=False)
+            save_settings(self.app_state.settings)
+            self.games_tab.save_games_schedule(show_popup=False)
         self.destroy()
 
     def start_finals(self):
-        # Get top 4 teams by score from games tab and scores tab
-        top_teams = get_team_scores_for_finals(self.schedule)
+        # Get top teams by score
+        from core.tournament_logic import get_team_scores_for_finals, create_finals_schedule
+        top_teams = get_team_scores_for_finals(self.app_state.schedule)
         if len(top_teams) < 4:
             messagebox.showerror("Finals", "Not enough teams for finals.")
             return
@@ -926,16 +919,18 @@ class TournamentApp(tk.Tk):
         # Create finals schedule
         finals_schedule = create_finals_schedule(top_teams)
         if finals_schedule:
-            self.schedule["finals"] = finals_schedule
+            self.app_state.schedule["finals"] = finals_schedule
+            from core.match_scheduler import save_finals_schedule
             save_finals_schedule(finals_schedule)
             self.show_visual_finals_window()
         else:
             messagebox.showerror("Finals", "Could not create finals schedule.")
 
     def show_visual_finals_window(self):
-        FinalsBracket(self, self.schedule, self.settings)
+        FinalsBracket(self, self.app_state.schedule, self.app_state.settings)
 
     def upload_display_now(self):
+        from data.mongodb_client import publish_display_data
         try:
             publish_display_data()
             messagebox.showinfo('Display Upload', 'Display data uploaded successfully!')
