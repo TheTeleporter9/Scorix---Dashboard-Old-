@@ -68,7 +68,6 @@ def set_match_penalty_for_team(idx: int, team_num: int, penalty: bool, schedule:
         key = f'penalty_team{team_num}'
         schedule['matches'][idx][key] = penalty
         save_schedule(schedule)
-)
 
 from data.mongodb_client import collection, live_announce_collection
 from utils.excel_exporter import export_excel, export_schedule_csv
