@@ -85,7 +85,7 @@ from ui.components.operator_tab import OperatorTab
 from ui.components.games_tab import GamesTab
 from ui.components.settings_tab import SettingsTab
 from ui.components.comment_history_tab import CommentHistoryTab
-from ui.components.finals_bracket import FinalsBracket
+from ui.components.finals_bracket import FinalsBracket # type: ignore
 
 # Import the new modular functionality
 from tkinter import filedialog
@@ -134,6 +134,7 @@ class TournamentApp(tk.Tk):
         self.app_state.settings = settings_dict
         schedule_dict = cast(Dict[str, Any], load_schedule())
         self.app_state.schedule = schedule_dict
+        self.app_state.root = self
         
         # Keep references for easier access
         self.settings: Settings = self.app_state.settings
@@ -1299,9 +1300,10 @@ class TournamentApp(tk.Tk):
         )
 
     def periodic_display_update(self):
-        from data.mongodb_client import publish_display_data
+        from data.mongodb_client import publish_display_data, get_display_payload
         try:
-            publish_display_data()
+            display_data = get_display_payload()
+            publish_display_data(display_data)
         except Exception as e:
             print(f"Error publishing display data: {e}")
         self.schedule_display_update()

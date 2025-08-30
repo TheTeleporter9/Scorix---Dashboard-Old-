@@ -7,34 +7,85 @@
   ],
   "matches": [
     {
+      "team1": "Raphie",
+      "team2": "Nicolina",
+      "played": false,
+      "penalty_team1": false,
+      "penalty_team2": false,
+      "comments": "",
+      "comment_history": []
+    },
+    {
       "team1": "Nico",
       "team2": "Nicolina",
       "played": true,
       "penalty_team1": false,
       "penalty_team2": false,
       "comments": "",
-      "comment_history": [],
-      "next_up": false
+      "comment_history": []
     },
     {
-      "team1": "Happy 1",
-      "team2": "Nicolina",
-      "played": true,
+      "team1": "Nico",
+      "team2": "Raphie",
+      "played": false,
       "penalty_team1": false,
       "penalty_team2": false,
       "comments": "",
-      "comment_history": [],
-      "next_up": false
+      "comment_history": []
     },
     {
       "team1": "Nico",
       "team2": "Nicolina",
+      "played": false,
+      "penalty_team1": false,
+      "penalty_team2": false,
+      "comments": "",
+      "comment_history": []
+    },
+    {
+      "team1": "Nico",
+      "team2": "Happy 1",
+      "played": true,
+      "penalty_team1": false,
+      "penalty_team2": false,
+      "comments": "",
+      "comment_history": []
+    },
+    {
+      "team1": "Raphie",
+      "team2": "Happy 1",
+      "played": false,
+      "penalty_team1": true,
+      "penalty_team2": false,
+      "comments": "",
+      "comment_history": []
+    },
+    {
+      "team1": "Nico",
+      "team2": "Nicolina",
+      "played": false,
+      "penalty_team1": false,
+      "penalty_team2": false,
+      "comments": "",
+      "comment_history": []
+    },
+    {
+      "team1": "Raphie",
+      "team2": "Happy 1",
+      "played": false,
+      "penalty_team1": false,
+      "penalty_team2": false,
+      "comments": "",
+      "comment_history": []
+    },
+    {
+      "team1": "Nico",
+      "team2": "Happy 1",
       "played": false,
       "penalty_team1": false,
       "penalty_team2": true,
       "comments": "",
-      "comment_history": [],
-      "next_up": true
+      "comment_history": []
     },
     {
       "team1": "Raphie",
@@ -43,8 +94,7 @@
       "penalty_team1": false,
       "penalty_team2": false,
       "comments": "",
-      "comment_history": [],
-      "next_up": false
+      "comment_history": []
     },
     {
       "team1": "Nico",
@@ -53,68 +103,7 @@
       "penalty_team1": false,
       "penalty_team2": false,
       "comments": "",
-      "comment_history": [],
-      "next_up": false
-    },
-    {
-      "team1": "Nico",
-      "team2": "Raphie",
-      "played": false,
-      "penalty_team1": false,
-      "penalty_team2": false,
-      "comments": "",
-      "comment_history": [],
-      "next_up": false
-    },
-    {
-      "team1": "Raphie",
-      "team2": "Nicolina",
-      "played": false,
-      "penalty_team1": false,
-      "penalty_team2": false,
-      "comments": "",
-      "comment_history": [],
-      "next_up": false
-    },
-    {
-      "team1": "Nico",
-      "team2": "Nicolina",
-      "played": false,
-      "penalty_team1": false,
-      "penalty_team2": false,
-      "comments": "",
-      "comment_history": [],
-      "next_up": false
-    },
-    {
-      "team1": "Raphie",
-      "team2": "Happy 1",
-      "played": false,
-      "penalty_team1": false,
-      "penalty_team2": false,
-      "comments": "",
-      "comment_history": [],
-      "next_up": false
-    },
-    {
-      "team1": "Nico",
-      "team2": "Raphie",
-      "played": false,
-      "penalty_team1": false,
-      "penalty_team2": false,
-      "comments": "",
-      "comment_history": [],
-      "next_up": false
-    },
-    {
-      "team1": "Nico",
-      "team2": "Happy 1",
-      "played": false,
-      "penalty_team1": false,
-      "penalty_team2": false,
-      "comments": "",
-      "comment_history": [],
-      "next_up": false
+      "comment_history": []
     },
     {
       "team1": "Happy 1",
@@ -123,8 +112,7 @@
       "penalty_team1": false,
       "penalty_team2": false,
       "comments": "",
-      "comment_history": [],
-      "next_up": false
+      "comment_history": []
     },
     {
       "team1": "Raphie",
@@ -133,18 +121,7 @@
       "penalty_team1": false,
       "penalty_team2": false,
       "comments": "",
-      "comment_history": [],
-      "next_up": false
-    },
-    {
-      "team1": "Nico",
-      "team2": "Happy 1",
-      "played": false,
-      "penalty_team1": false,
-      "penalty_team2": false,
-      "comments": "",
-      "comment_history": [],
-      "next_up": false
+      "comment_history": []
     },
     {
       "team1": "Raphie",
@@ -153,38 +130,7 @@
       "penalty_team1": false,
       "penalty_team2": false,
       "comments": "",
-      "comment_history": [],
-      "next_up": false
-    },
-    {
-      "team1": "Raphie",
-      "team2": "Nicolina",
-      "played": false,
-      "penalty_team1": false,
-      "penalty_team2": false,
-      "comments": "",
-      "comment_history": [],
-      "next_up": false
-    },
-    {
-      "team1": "Happy 1",
-      "team2": "Nicolina",
-      "played": false,
-      "penalty_team1": false,
-      "penalty_team2": false,
-      "comments": "",
-      "comment_history": [],
-      "next_up": false
-    },
-    {
-      "team1": "Happy 1",
-      "team2": "Nicolina",
-      "played": false,
-      "penalty_team1": false,
-      "penalty_team2": false,
-      "comments": "",
-      "comment_history": [],
-      "next_up": false
+      "comment_history": []
     },
     {
       "team1": "Nico",
@@ -193,8 +139,25 @@
       "penalty_team1": false,
       "penalty_team2": false,
       "comments": "",
-      "comment_history": [],
-      "next_up": false
+      "comment_history": []
+    },
+    {
+      "team1": "Happy 1",
+      "team2": "Nicolina",
+      "played": false,
+      "penalty_team1": false,
+      "penalty_team2": false,
+      "comments": "",
+      "comment_history": []
+    },
+    {
+      "team1": "Happy 1",
+      "team2": "Nicolina",
+      "played": false,
+      "penalty_team1": false,
+      "penalty_team2": false,
+      "comments": "",
+      "comment_history": []
     },
     {
       "team1": "Nico",
@@ -203,48 +166,13 @@
       "penalty_team1": false,
       "penalty_team2": false,
       "comments": "",
-      "comment_history": [],
-      "next_up": false
-    },
-    {
-      "team1": "Raphie",
-      "team2": "Happy 1",
-      "played": false,
-      "penalty_team1": false,
-      "penalty_team2": false,
-      "comments": "",
-      "comment_history": [],
-      "next_up": false
-    },
-    {
-      "team1": "Raphie",
-      "team2": "Happy 1",
-      "played": false,
-      "penalty_team1": false,
-      "penalty_team2": false,
-      "comments": "",
-      "comment_history": [],
-      "next_up": false
-    },
-    {
-      "team1": "Nico",
-      "team2": "Nicolina",
-      "played": false,
-      "penalty_team1": false,
-      "penalty_team2": false,
-      "comments": "",
-      "comment_history": [],
-      "next_up": false
-    },
-    {
-      "team1": "Nico",
-      "team2": "Happy 1",
-      "played": false,
-      "penalty_team1": false,
-      "penalty_team2": false,
-      "comments": "",
-      "comment_history": [],
-      "next_up": false
+      "comment_history": []
     }
-  ]
+  ],
+  "team_notes": {
+    "Nico": "sadfasdf",
+    "Raphie": "sadfasdf",
+    "Happy 1": "sadfasdf",
+    "Nicolina": "sadfasdf"
+  }
 }

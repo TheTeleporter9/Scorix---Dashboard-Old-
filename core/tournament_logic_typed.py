@@ -123,7 +123,7 @@ def get_leaderboard(games: List[Dict[str, Any]]) -> List[Tuple[str, float]]:
             name = team.get('Name', '')
             score = team.get('Score', 0)
             if name and isinstance(score, (int, float)):
-                scores[name] += score
+                scores[name] += score # type: ignore
                 played[name] += 1
     
     # Calculate averages
@@ -137,7 +137,7 @@ def get_leaderboard(games: List[Dict[str, Any]]) -> List[Tuple[str, float]]:
 
 def refresh_tournament_data() -> Dict[str, List[Dict[str, Any]]]:
     """Get fresh data from MongoDB."""
-    data = list(collection.find())
+    data = list(collection.find()) # type: ignore
     return {'games': data} if data else {'games': []}
 
 def set_match_penalty_for_team(idx: int, team_num: int, penalty_value: bool, schedule: Schedule) -> None:
@@ -164,7 +164,7 @@ def get_team_scores_for_finals(games: List[Dict[str, Any]]) -> List[Tuple[str, f
             name = team.get('Name', '')
             score = team.get('Score', 0)
             if name and isinstance(score, (int, float)):
-                scores[name]['total'] += score
+                scores[name]['total'] += score # type: ignore
                 scores[name]['games'] += 1
     
     # Calculate averages

@@ -5,12 +5,14 @@ Settings tab functionality for the tournament application.
 import tkinter as tk
 from tkinter import ttk, messagebox
 from .app_state import load_comp_display_settings, save_comp_display_settings, save_settings
+from data.socket_server import ScorexSocketServer
 
 class SettingsTab:
     def __init__(self, parent, app_state):
         self.parent = parent
         self.app_state = app_state
         self.settings = app_state.settings
+        self.server = ScorexSocketServer()
         self.create_widgets()
         
     def create_widgets(self):
@@ -108,3 +110,64 @@ class SettingsTab:
 
         tk.Button(self.parent, text='💾 Save Settings', command=save_and_apply,
                 bg='#90caf9', fg='black').pack(pady=10)
+                
+        # Server settings section
+        server_frame = tk.LabelFrame(self.parent, text="TCP Server Settings", bg=self.settings['theme_color'])
+        server_frame.pack(fill='x', padx=20, pady=10)
+
+        # IP Address
+        ip_frame = tk.Frame(server_frame, bg=self.settings['theme_color'])
+        ip_frame.pack(fill='x', padx=5, pady=5)
+        
+        self.ip_var = tk.StringVar(value='')
+        self.auto_ip_var = tk.BooleanVar(value=True)
+        
+        def toggle_ip_entry(*args):
+            if self.auto_ip_var.get():
+                ip_entry.configure(state='disabled')
+                self.ip_var.set('')
+            else:
+                ip_entry.configure(state='normal')
+
+        tk.Label(ip_frame, text='Server IP:', bg=self.settings['theme_color']).pack(side='left', padx=5)
+        ip_entry = tk.Entry(ip_frame, textvariable=self.ip_var, width=15)
+        ip_entry.pack(side='left', padx=5)
+        
+        auto_ip_check = tk.Checkbutton(ip_frame, text='Auto-detect IP', variable=self.auto_ip_var,
+                                      command=toggle_ip_entry, bg=self.settings['theme_color'])
+        auto_ip_check.pack(side='left', padx=5)
+        toggle_ip_entry()  # Initial state
+
+        # Port
+        port_frame = tk.Frame(server_frame, bg=self.settings['theme_color'])
+        port_frame.pack(fill='x', padx=5, pady=5)
+        
+        tk.Label(port_frame, text='Port:', bg=self.settings['theme_color']).pack(side='left', padx=5)
+        self.port_var = tk.StringVar(value='5001')
+        port_entry = tk.Entry(port_frame, textvariable=self.port_var, width=6)
+        port_entry.pack(side='left', padx=5)
+
+        # Server controls
+        control_frame = tk.Frame(server_frame, bg=self.settings['theme_color'])
+        control_frame.pack(fill='x', padx=5, pady=5)
+        
+        def start_server():
+            try:
+                port = int(self.port_var.get())
+                host = '' if self.auto_ip_var.get() else self.ip_var.get()
+                self.server = ScorexSocketServer(host=host, port=port)
+                self.server.start_server(self.parent.winfo_toplevel())
+            except ValueError:
+                messagebox.showerror("Error", "Invalid port number")
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to start server: {str(e)}")
+
+        def stop_server():
+            if hasattr(self, 'server'):
+                self.server.stop_server()
+                messagebox.showinfo("Server Stopped", "TCP Server has been stopped")
+
+        tk.Button(control_frame, text='Start Server', command=start_server,
+                 bg='#4caf50', fg='white').pack(side='left', padx=5)
+        tk.Button(control_frame, text='Stop Server', command=stop_server,
+                 bg='#f44336', fg='white').pack(side='left', padx=5)

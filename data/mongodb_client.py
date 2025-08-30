@@ -5,6 +5,7 @@ from pymongo import MongoClient
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
+import uvicorn
 
 # ---------------- MongoDB Settings ----------------
 MONGO_URI = 'mongodb+srv://TheTeleporter9:JTMdX9HFCllYRJDX@wro-scoring.n0khn.mongodb.net/?retryWrites=true&w=majority'
@@ -146,7 +147,31 @@ def get_latest_data():
 def get_display_data():
     return get_display_payload()
 
-# ---------------- Run Server ----------------
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=5000)
+# ---------------- Run Server ---------------:
+def publish_display_data(data):
+    """Publish display data to the display collection"""
+    try:
+        display_collection.replace_one({}, data, upsert=True)
+        return True
+    except Exception as e:
+        print(f"Error publishing display data: {e}")
+        return False
+
+import socket
+
+def get_local_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        # doesn’t need to be reachable, just triggers routing
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+    except Exception:
+        ip = "127.0.0.1"
+    finally:
+        s.close()
+    return ip
+
+def run_server():
+    host_ip = get_local_ip()
+    print(f"🚀 Server running at: http://{host_ip}:5000")
+    uvicorn.run(app, host=host_ip, port=5000)

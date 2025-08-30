@@ -1,5 +1,6 @@
 # CJM
 from ui.gui import TournamentApp
+import data.mongodb_client as m
 
 if __name__ == '__main__':
     app = TournamentApp()
