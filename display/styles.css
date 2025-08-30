@@ -1,0 +1,225 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background-color: #000;
+    color: white;
+    overflow: hidden;
+}
+
+.page {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transform: scale(0.95);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+/* Prep Page */
+#prep-page {
+    background-color: #2c3e50;
+    transform-origin: center;
+}
+
+.prep-content {
+    text-align: center;
+}
+
+/* Game Page */
+#game-page {
+    background-color: #000;
+    transform-origin: center;
+}
+
+/* Winner Page */
+#winner-page {
+    background-color: #2ecc71;
+    transform-origin: center;
+}
+
+.winner-content {
+    text-align: center;
+}
+
+/* Reset Page */
+#reset-page {
+    background-color: #e74c3c;
+    transform-origin: center;
+}
+
+.reset-content {
+    text-align: center;
+}
+
+.timer {
+    font-size: 8rem;
+    font-family: monospace;
+    margin: 20px 0;
+}
+
+.instruction {
+    font-size: 2rem;
+    opacity: 0.8;
+    margin-top: 20px;
+}
+
+.table-indicator {
+    position: static;
+    padding: 10px 20px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+    font-size: 1.2em;
+}
+
+.score-display {
+    text-align: center;
+}
+
+.score-display h2 {
+    font-size: 6rem;
+    margin: 0;
+}
+
+.winner-announcement {
+    font-size: 6rem;
+    animation: bounce 1s infinite;
+}
+
+.celebration {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, #ff0000, #00ff00, #0000ff);
+    opacity: 0.3;
+    animation: gradient 3s ease infinite;
+    z-index: -1;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+}
+
+@keyframes gradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.page.active {
+    display: flex;
+    opacity: 1;
+    transform: scale(1);
+}
+
+h1 {
+    font-size: 4rem;
+    margin-bottom: 20px;
+}
+
+.winner-animation {
+    text-align: center;
+}
+
+.winner-animation h1 {
+    font-size: 5rem;
+    animation: bounce 1s infinite;
+}
+
+.timer-display {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    padding: 10px 20px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+    font-size: 1.5em;
+    font-family: monospace;
+    transition: opacity 0.3s ease;
+}
+
+#header-info {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 20px;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+}
+
+.teams-display {
+    text-align: center;
+    font-size: 2rem;
+    animation: slideDown 0.5s ease;
+}
+
+.game-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+}
+
+#timer-display {
+    font-size: 6rem;
+    margin: 0;
+}
+
+/* Add styles for the table select page */
+#table-select-page {
+    background-color: #1a1d21;
+    transform-origin: center;
+}
+
+.table-select-content {
+    text-align: center;
+}
+
+.table-select-content h1 {
+    font-size: 4rem;
+    margin-bottom: 2rem;
+}
+
+.table-indicator {
+    font-size: 2rem;
+    padding: 1rem;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+}
+
+/* Add animation for content */
+.page > div {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.5s ease 0.2s, transform 0.5s ease 0.2s;
+}
+
+.page.active > div {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Add fade animation for timer */
+#timer-display {
+    transition: opacity 0.3s ease;
+}
+
+/* Add bounce animation for team names */
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+} 

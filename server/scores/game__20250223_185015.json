@@ -1,0 +1,21 @@
+{
+    "gameNumber": "",
+    "team1Name": "Team1",
+    "team2Name": "Test2",
+    "timestamp": "2025-02-23T16:50:15.767Z",
+    "table": "1",
+    "team1": {
+        "name": "",
+        "orange": 3,
+        "purple": 0,
+        "penalties": [],
+        "score": 3
+    },
+    "team2": {
+        "name": "",
+        "orange": 0,
+        "purple": 2,
+        "penalties": [],
+        "score": 0
+    }
+}

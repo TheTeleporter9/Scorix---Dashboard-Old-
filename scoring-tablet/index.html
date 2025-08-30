@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WRO Double Tennis Counter</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="main-container">
+        <h1>WRO Double Tennis Counter</h1>
+        
+        <select id="tableSelect" class="table-select">
+            <option value="1">Table 1</option>
+            <option value="2">Table 2</option>
+        </select>
+
+        <input type="text" id="gameNumber" placeholder="Game Number" class="game-input">
+        
+        <div class="team-names">
+            <input type="text" id="team1Name" placeholder="Team 1 Name" class="team-input">
+            <input type="text" id="team2Name" placeholder="Team 2 Name" class="team-input">
+        </div>
+
+        <div class="scoring-container">
+            <div class="team-section">
+                <h2>Left Side</h2>
+                <h3>Score: <span id="team1-score">0</span></h3>
+                
+                <div class="ball-section">
+                    <h4>Orange Balls: <span id="team1-orange">0</span></h4>
+                    <div class="button-group">
+                        <button onclick="updateBalls('team1', 'orange', 1)" class="orange">+1</button>
+                        <button onclick="updateBalls('team1', 'orange', -1)" class="orange">-1</button>
+                    </div>
+                </div>
+
+                <div class="ball-section">
+                    <h4>Purple Balls: <span id="team1-purple">0</span></h4>
+                    <div class="button-group">
+                        <button onclick="updateBalls('team1', 'purple', 1)" class="purple">+1</button>
+                        <button onclick="updateBalls('team1', 'purple', -1)" class="purple">-1</button>
+                    </div>
+                </div>
+
+                <div class="penalties-section">
+                    <h4>Active Penalties:</h4>
+                    <div id="team1-active-penalties" class="active-penalties"></div>
+                    <button onclick="togglePenaltyDropdown('team1')" class="penalty-toggle">Select Penalties</button>
+                    <select id="team1Penalty" class="penalty-select" multiple style="display: none;">
+                        <option value="touching_robot">Touching Robot During Match (-30)</option>
+                        <option value="robot_outside">Robot Completely Outside Field (-30)</option>
+                        <option value="ball_thrown">Ball Thrown Over Wall (-30)</option>
+                        <option value="wrong_start">Wrong Starting Position (-10)</option>
+                        <option value="ball_outside">Ball Outside Field (-10)</option>
+                        <option value="illegal_action">Illegal Action (-30)</option>
+                        <option value="late_start">Late Start (-30)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="team-section">
+                <h2>Right Side</h2>
+                <h3>Score: <span id="team2-score">0</span></h3>
+                
+                <div class="ball-section">
+                    <h4>Orange Balls: <span id="team2-orange">0</span></h4>
+                    <div class="button-group">
+                        <button onclick="updateBalls('team2', 'orange', 1)" class="orange">+1</button>
+                        <button onclick="updateBalls('team2', 'orange', -1)" class="orange">-1</button>
+                    </div>
+                </div>
+
+                <div class="ball-section">
+                    <h4>Purple Balls: <span id="team2-purple">0</span></h4>
+                    <div class="button-group">
+                        <button onclick="updateBalls('team2', 'purple', 1)" class="purple">+1</button>
+                        <button onclick="updateBalls('team2', 'purple', -1)" class="purple">-1</button>
+                    </div>
+                </div>
+
+                <div class="penalties-section">
+                    <h4>Active Penalties:</h4>
+                    <div id="team2-active-penalties" class="active-penalties"></div>
+                    <button onclick="togglePenaltyDropdown('team2')" class="penalty-toggle">Select Penalties</button>
+                    <select id="team2Penalty" class="penalty-select" multiple style="display: none;">
+                        <option value="touching_robot">Touching Robot During Match (-30)</option>
+                        <option value="robot_outside">Robot Completely Outside Field (-30)</option>
+                        <option value="ball_thrown">Ball Thrown Over Wall (-30)</option>
+                        <option value="wrong_start">Wrong Starting Position (-10)</option>
+                        <option value="ball_outside">Ball Outside Field (-10)</option>
+                        <option value="illegal_action">Illegal Action (-30)</option>
+                        <option value="late_start">Late Start (-30)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <button onclick="saveCount()" class="action-button save">Save Count</button>
+        <button onclick="resetCount()" class="action-button reset">Reset Count</button>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script src="script.js"></script>
+</body>
+</html> 
