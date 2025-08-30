@@ -12,7 +12,7 @@ GameData = Dict[str, Union[str, Dict[str, Union[str, int]], datetime]]
 
 GameData = Dict[str, Union[str, Dict[str, Union[str, int]], datetime]]
 
-def get_next_game(games: List[GameData]) -> int:
+def get_next_game(games: List[GameData]) -> int: # type: ignore
     """Determines the next game number based on the highest played game."""
     played_numbers = []
     for g in games:

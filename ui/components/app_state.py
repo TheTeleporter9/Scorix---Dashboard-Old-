@@ -5,6 +5,7 @@ Application state and shared functionality.
 import json
 from typing import Dict, List, Any, Optional, Union, TypedDict, cast
 from datetime import datetime
+import tkinter as tk
 from data.db_utils import (
     get_all_games, get_db_collection, sync_scores_from_mongodb,
     update_mongodb_from_schedule, publish_display_data,
@@ -48,6 +49,7 @@ class AppState:
         self.display_update_job: Optional[Any] = None
         self.auto_refresh_enabled: bool = True
         self.auto_refresh_interval: int = self._settings['auto_refresh_interval']  # seconds
+        self.root: Optional[tk.Tk] = None
     
     @property
     def settings(self) -> Settings:
@@ -70,6 +72,33 @@ class AppState:
     def get_setting(self, key: str, default: Any = None) -> Any:
         """Safely get a setting value with a default."""
         return self.settings.get(key, default)
+
+    def apply_theme(self) -> None:
+        """Apply the current theme settings to the UI"""
+        if not self.root:
+            return
+        
+        theme_color = self.settings.get('theme_color', '#e3f2fd')
+        is_dark = self.settings.get('dark_mode', False)
+        highlight_color = self.settings.get('highlight_color', '#2196f3')
+        
+        bg_color = '#2c2c2c' if is_dark else theme_color
+        fg_color = 'white' if is_dark else 'black'
+        
+        # Apply to root window and all children
+        for widget in [self.root] + list(self.root.winfo_children()):
+            try:
+                widget.configure(bg=bg_color)
+                if hasattr(widget, 'configure'):
+                    if 'foreground' in widget.configure():
+                        widget.configure(fg=fg_color)
+                    if 'selectbackground' in widget.configure():
+                        widget.configure(selectbackground=highlight_color)
+                    if 'selectforeground' in widget.configure():
+                        widget.configure(selectforeground='white')
+            except tk.TclError:
+                # Some widgets might not support all configurations
+                pass
 
 def load_settings():
     try:

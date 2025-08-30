@@ -77,19 +77,27 @@ def generate_round_robin(teams, num_matches=1, randomize=True):
         random.shuffle(matches)
     return matches
 
-def add_team(schedule, team_name, randomize=True):
+def add_team(team_name, schedule, randomize=True):
     """Add a team to the schedule"""
-    if team_name not in schedule['teams']:
+    if not isinstance(schedule, dict):
+        schedule = load_schedule()
+    if team_name not in schedule.get('teams', []):
+        if 'teams' not in schedule:
+            schedule['teams'] = []
         schedule['teams'].append(team_name)
-        num_matches = get_num_matches(schedule)
+        num_matches = len(schedule.get('matches', [])) // (len(schedule['teams']) * (len(schedule['teams']) - 1) // 2) if len(schedule['teams']) > 1 else 1
         schedule['matches'] = generate_round_robin(schedule['teams'], num_matches, randomize)
         save_schedule(schedule)
 
-def remove_team(schedule, team_name, randomize=True):
+def remove_team(team_name, schedule, randomize=True):
     """Remove a team from the schedule"""
+    if not isinstance(schedule, dict):
+        schedule = load_schedule()
+    if 'teams' not in schedule:
+        schedule['teams'] = []
     if team_name in schedule['teams']:
         schedule['teams'].remove(team_name)
-        num_matches = get_num_matches(schedule)
+        num_matches = len(schedule.get('matches', [])) // (len(schedule['teams']) * (len(schedule['teams']) - 1) // 2) if len(schedule['teams']) > 1 else 1
         schedule['matches'] = generate_round_robin(schedule['teams'], num_matches, randomize)
         save_schedule(schedule)
 
@@ -99,7 +107,7 @@ def set_match_comment_data(idx, comment, schedule):
         schedule['matches'][idx]['comments'] = comment
         save_schedule(schedule)
 
-def set_match_played(schedule: Schedule, idx: int, played: bool) -> None:
+def set_match_played(schedule: Schedule, idx: int, played: bool) -> None: # type: ignore
     """Set whether a match has been played"""
     if 0 <= idx < len(schedule['matches']):
         schedule['matches'][idx]['played'] = played
