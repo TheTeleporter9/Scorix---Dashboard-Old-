@@ -6,6 +6,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
 import uvicorn
+import threading
 
 # ---------------- MongoDB Settings ----------------
 MONGO_URI = 'mongodb+srv://TheTeleporter9:JTMdX9HFCllYRJDX@wro-scoring.n0khn.mongodb.net/?retryWrites=true&w=majority'
@@ -62,10 +63,19 @@ def get_next_up_match_from_schedule():
         return None
     with open(SCHEDULE_FILE, 'r') as f:
         schedule = json.load(f)
+
+    # First try to get the one marked next_up
     for match in schedule.get('matches', []):
         if match.get('next_up', False):
             return match
+
+    # Fallback: first unplayed match
+    for match in schedule.get('matches', []):
+        if not match.get('played', False):
+            return match
+
     return None
+
 
 def sync_scores_to_schedule():
     schedule = None
@@ -122,6 +132,7 @@ def get_display_payload():
         'teamBRank': teamBRank
     }
 
+
 # ---------------- FastAPI Endpoints ----------------
 @app.post("/update")
 async def update_data(request: Request):
@@ -171,7 +182,33 @@ def get_local_ip():
         s.close()
     return ip
 
-def run_server():
-    host_ip = get_local_ip()
-    print(f"🚀 Server running at: http://{host_ip}:5000")
-    uvicorn.run(app, host=host_ip, port=5000)
+import asyncio
+from fastapi import FastAPI
+
+# --- Keep your existing imports and code ---
+
+# ---------------- Background tasks ----------------
+async def periodic_display_update():
+    while True:
+        payload = get_display_payload()  # Get the latest payload from schedule + games
+        publish_display_data(payload)     # Save it to display collection
+        print(f"📤 Display data updated at {datetime.now().isoformat()}")
+        await asyncio.sleep(30)           # wait 30 seconds
+
+async def periodic_codebase_update():
+    while True:
+        sync_scores_to_schedule()
+        print(f"🔄 Codebase data (schedule scores) updated at {datetime.now().isoformat()}")
+        await asyncio.sleep(60)           # wait 60 seconds (1 minute)
+
+# Start the background tasks on FastAPI startup
+@app.on_event("startup")
+async def startup_event():
+    asyncio.create_task(periodic_display_update())
+    asyncio.create_task(periodic_codebase_update())
+
+# ---------------- Run Server ----------------
+def run_server_in_thread(port:int = 5001):
+    server_thread = threading.Thread(target=lambda: uvicorn.run(app, host=get_local_ip(), port=port, log_level="info"), daemon=True)
+    server_thread.start()
+    print(f"🚀 Server started in background thread on port {port}")

@@ -9,11 +9,12 @@
     {
       "team1": "Raphie",
       "team2": "Nicolina",
-      "played": false,
+      "played": true,
       "penalty_team1": false,
       "penalty_team2": false,
       "comments": "",
-      "comment_history": []
+      "comment_history": [],
+      "next_up": false
     },
     {
       "team1": "Nico",
@@ -22,25 +23,28 @@
       "penalty_team1": false,
       "penalty_team2": false,
       "comments": "",
-      "comment_history": []
+      "comment_history": [],
+      "next_up": false
     },
     {
       "team1": "Nico",
       "team2": "Raphie",
-      "played": false,
+      "played": true,
       "penalty_team1": false,
       "penalty_team2": false,
       "comments": "",
-      "comment_history": []
+      "comment_history": [],
+      "next_up": false
     },
     {
       "team1": "Nico",
       "team2": "Nicolina",
-      "played": false,
+      "played": true,
       "penalty_team1": false,
       "penalty_team2": false,
       "comments": "",
-      "comment_history": []
+      "comment_history": [],
+      "next_up": false
     },
     {
       "team1": "Nico",
@@ -49,7 +53,8 @@
       "penalty_team1": false,
       "penalty_team2": false,
       "comments": "",
-      "comment_history": []
+      "comment_history": [],
+      "next_up": false
     },
     {
       "team1": "Raphie",
@@ -58,7 +63,8 @@
       "penalty_team1": true,
       "penalty_team2": false,
       "comments": "",
-      "comment_history": []
+      "comment_history": [],
+      "next_up": true
     },
     {
       "team1": "Nico",
@@ -67,7 +73,8 @@
       "penalty_team1": false,
       "penalty_team2": false,
       "comments": "",
-      "comment_history": []
+      "comment_history": [],
+      "next_up": false
     },
     {
       "team1": "Raphie",
@@ -76,7 +83,8 @@
       "penalty_team1": false,
       "penalty_team2": false,
       "comments": "",
-      "comment_history": []
+      "comment_history": [],
+      "next_up": false
     },
     {
       "team1": "Nico",
@@ -85,7 +93,8 @@
       "penalty_team1": false,
       "penalty_team2": true,
       "comments": "",
-      "comment_history": []
+      "comment_history": [],
+      "next_up": false
     },
     {
       "team1": "Raphie",
@@ -94,7 +103,8 @@
       "penalty_team1": false,
       "penalty_team2": false,
       "comments": "",
-      "comment_history": []
+      "comment_history": [],
+      "next_up": false
     },
     {
       "team1": "Nico",
@@ -103,7 +113,8 @@
       "penalty_team1": false,
       "penalty_team2": false,
       "comments": "",
-      "comment_history": []
+      "comment_history": [],
+      "next_up": false
     },
     {
       "team1": "Happy 1",
@@ -112,7 +123,8 @@
       "penalty_team1": false,
       "penalty_team2": false,
       "comments": "",
-      "comment_history": []
+      "comment_history": [],
+      "next_up": false
     },
     {
       "team1": "Raphie",
@@ -121,7 +133,8 @@
       "penalty_team1": false,
       "penalty_team2": false,
       "comments": "",
-      "comment_history": []
+      "comment_history": [],
+      "next_up": false
     },
     {
       "team1": "Raphie",
@@ -130,7 +143,8 @@
       "penalty_team1": false,
       "penalty_team2": false,
       "comments": "",
-      "comment_history": []
+      "comment_history": [],
+      "next_up": false
     },
     {
       "team1": "Nico",
@@ -139,7 +153,8 @@
       "penalty_team1": false,
       "penalty_team2": false,
       "comments": "",
-      "comment_history": []
+      "comment_history": [],
+      "next_up": false
     },
     {
       "team1": "Happy 1",
@@ -148,7 +163,8 @@
       "penalty_team1": false,
       "penalty_team2": false,
       "comments": "",
-      "comment_history": []
+      "comment_history": [],
+      "next_up": false
     },
     {
       "team1": "Happy 1",
@@ -157,7 +173,8 @@
       "penalty_team1": false,
       "penalty_team2": false,
       "comments": "",
-      "comment_history": []
+      "comment_history": [],
+      "next_up": false
     },
     {
       "team1": "Nico",
@@ -166,7 +183,8 @@
       "penalty_team1": false,
       "penalty_team2": false,
       "comments": "",
-      "comment_history": []
+      "comment_history": [],
+      "next_up": false
     }
   ],
   "team_notes": {

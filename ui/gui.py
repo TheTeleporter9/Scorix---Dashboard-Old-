@@ -1,20 +1,11 @@
-"""
-Tournament GUI application main file.
-"""
-
 from typing import Dict, List, Any, Optional, Union, TypedDict, cast
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog, simpledialog
 from PIL import Image, ImageTk
 from datetime import datetime
 
-from core import (
-    load_schedule, save_schedule,
-    set_match_played, add_team, remove_team,
-    generate_round_robin, calculate_team_scores,
-    get_sorted_team_scores, calculate_total_scores,
-    get_all_teams
-)
+from core import *
+
 from core.match_scheduler import (
     get_match_data, get_match_comment_data,
     Schedule, Match, MatchComment
@@ -92,7 +83,7 @@ from tkinter import filedialog
 from typing import cast
 from ui.components import (
     AppState, GamesTab, ScoresTab, SettingsTab, 
-    OperatorTab, CommentHistoryTab, FinalsBracket
+    OperatorTab, CommentHistoryTab, FinalsBracket # type: ignore
 )
 from ui.components.app_state import (
     load_settings, save_settings, load_comp_display_settings, save_comp_display_settings,
@@ -101,6 +92,7 @@ from ui.components.app_state import (
 from utils.excel_exporter import export_games_to_excel
 from data.db_utils import publish_display_data
 from utils.type_utils import ensure_dict
+from data.mongodb_client import sync_scores_to_schedule
 
 print('Starting Tournament GUI...')
 
@@ -124,7 +116,7 @@ class TournamentApp(tk.Tk):
                 raise RuntimeError(f"{name} tree not initialized")
             return tree
             
-        self._ensure_scheduled_tree = lambda: ensure_tree(self.scheduled_tree, "scheduled matches")
+        self._ensure_scheduled_tree = lambda: ensure_tree(self.scheduled_tree, "scheduled matches") # type: ignore
         self._ensure_completed_tree = lambda: ensure_tree(self.completed_tree, "completed matches")
         self._ensure_standings_tree = lambda: ensure_tree(self.standings_tree, "standings")
         
@@ -144,7 +136,7 @@ class TournamentApp(tk.Tk):
         try:
             logo_img = Image.open('scorix_logo.png').resize((120, 120))
             self.logo_img = ImageTk.PhotoImage(logo_img)
-            self.iconphoto(True, self.logo_img)
+            self.iconphoto(True, self.logo_img) # type: ignore
         except Exception as e:
             print('Logo image not found or failed to load:', e)
             self.logo_img = None
@@ -159,6 +151,17 @@ class TournamentApp(tk.Tk):
         self.app_state.display_update_job = None
         self.schedule_display_update()
         
+    def refresh_all_data(self):
+        """Refreshes all data in the UI components and syncs backend data."""
+        print("🔄 Refreshing all data...")
+        sync_scores_to_schedule()
+        self.scores_tab.refresh_data()
+        self.operator_tab.refresh_data()
+        self.games_tab.refresh_games_trees()
+        self.comment_history_tab.refresh_comment_history()
+        # Also update the main app's internal schedule state from the re-saved schedule.json
+        self.app_state.schedule = load_schedule()
+
     def update_display(self):
         """Update the tournament display data"""
         # Update MongoDB collection
@@ -226,7 +229,7 @@ class TournamentApp(tk.Tk):
                 penalty1 = '*' if m['penalty_team1'] else ''
                 penalty2 = '*' if m['penalty_team2'] else ''
                 comments = m.get('comments', '')
-                self.completed_tree.insert('', 'end', values=(i, team1, team2, played, penalty1, penalty2, comments))
+                self.completed_tree.insert('', 'end', values=(i, team1, team2, played, penalty1, penalty2, comments)) # type: ignore
                 
     def update_team_standings(self) -> None:
         """Update the team standings display"""
@@ -339,7 +342,7 @@ class TournamentApp(tk.Tk):
         
         return frame
     
-    def create_team_standings_frame(self, parent: ttk.Frame) -> ttk.Frame:
+    def create_team_standings_frame(self, parent: ttk.Frame) -> ttk.Frame: # type: ignore
         """Create the team standings frame with tree and scrollbar"""
         columns = ['rank', 'team', 'score']
         headings = {
@@ -408,7 +411,7 @@ class TournamentApp(tk.Tk):
         
         # Create scrollbar
         scrollbar = ttk.Scrollbar(frame, orient=tk.VERTICAL, command=self.standings_tree.yview)
-        self.standings_tree.configure(yscroll=scrollbar.set)
+        self.standings_tree.configure(yscroll=scrollbar.set) # type: ignore
         
         # Pack components
         self.standings_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
@@ -417,25 +420,23 @@ class TournamentApp(tk.Tk):
         frame.pack(fill=tk.BOTH, expand=True)
         return frame
         
-    def toggle_match_played(self, event=None) -> None:
-        """Toggle the played status of a match when double-clicked"""
-        tree = self._ensure_scheduled_tree()
-            
-        sel = tree.selection()
-        if not sel:
-            return
-            
-        try:
-            idx = int(tree.item(sel[0])['values'][0])
-            m = get_match_data(idx, self.schedule)
-            if m:
-                played = not m.get('played', False)
-                set_match_played(self.schedule, idx, played)
-                self.update_display()
-        except Exception as e:
-            messagebox.showerror('Error', f'Failed to toggle match status: {e}')
-        
-        # Set column headings
+    def _ensure_scheduled_tree(self, parent=None):
+        """Ensure the scheduled tree exists and return it"""
+        if self.scheduled_tree is not None:
+            return self.scheduled_tree
+    
+        if parent is None:
+            # You need to define where the parent should come from
+            # This might be self.some_frame or similar
+            parent = self # Replace with your actual parent widget
+    
+    # Create the tree
+        self.scheduled_tree = ttk.Treeview(parent, 
+                                        columns=('match', 'team1', 'team2', 'played', 
+                                                'penalty1', 'penalty2', 'comments'),
+                                        show='headings')
+    
+    # Set column headings
         self.scheduled_tree.heading('match', text='Match')
         self.scheduled_tree.heading('team1', text='Team 1')
         self.scheduled_tree.heading('team2', text='Team 2')
@@ -452,20 +453,41 @@ class TournamentApp(tk.Tk):
         self.scheduled_tree.column('penalty1', width=30)
         self.scheduled_tree.column('penalty2', width=30)
         self.scheduled_tree.column('comments', width=150)
-        
-        # Create scrollbar
+    
+         # Create scrollbar
         scrollbar = ttk.Scrollbar(parent, orient=tk.VERTICAL, command=self.scheduled_tree.yview)
-        self.scheduled_tree.configure(yscroll=scrollbar.set)
-        
+        self.scheduled_tree.configure(yscrollcommand=scrollbar.set)
+    
         # Pack components
         self.scheduled_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        
+    
         # Bind events
         self.scheduled_tree.bind('<Double-1>', self.toggle_match_played)
         self.scheduled_tree.bind('<Return>', self.toggle_match_played)
-        
+    
         return self.scheduled_tree
+
+    def toggle_match_played(self, event=None) -> None:
+        """Toggle the played status of a match when double-clicked"""
+        tree = self._ensure_scheduled_tree()
+        
+        if tree is None:
+            return
+            
+        sel = tree.selection()
+        if not sel:
+            return
+            
+        try:
+            idx = int(tree.item(sel[0])['values'][0])
+            m = get_match_data(idx, self.schedule)
+            if m:
+                played = not m.get('played', False)
+                set_match_played(self.schedule, idx, played)
+                self.update_display()
+        except Exception as e:
+            messagebox.showerror('Error', f'Failed to toggle match status: {e}')
 
     def apply_theme(self):
         if not hasattr(self, 'app_state'):
@@ -502,6 +524,10 @@ class TournamentApp(tk.Tk):
     def create_widgets(self):
         self.notebook = ttk.Notebook(self)
         self.notebook.pack(fill='both', expand=True)
+        
+        # Add a Refresh button to the main window
+        refresh_button = tk.Button(self, text='Refresh', command=self.refresh_all_data, bg='#007bff', fg='white', font=('Arial', 10, 'bold'))
+        refresh_button.pack(side='top', pady=5)
         
         # Scores tab
         bg_color = self.app_state.get_setting('theme_color', '#e3f2fd')
@@ -720,8 +746,8 @@ class TournamentApp(tk.Tk):
             self.settings['notification_sound'] = notif_var.get()
             self.settings['font_size'] = font_var.get()
             self.settings['highlight_color'] = highlight_var.get()
-            self.settings['autosave_interval'] = autosave_var.get()
-            self.settings['https_server_ip'] = https_ip_var.get()
+            self.settings['autosave_interval'] = autosave_var.get()# type: ignore
+            self.settings['https_server_ip'] = https_ip_var.get()# type: ignore
             save_settings(self.settings)
             # Save display MongoDB settings if visible
             if display_var.get():
@@ -815,26 +841,27 @@ class TournamentApp(tk.Tk):
         self._last_tab = None
 
     def on_tab_changed(self, event):
+        self.refresh_all_data()
         tab = self.notebook.select()
         tab_text = self.notebook.tab(tab, 'text')
         
-        # Update current tab's data
-        if tab_text == '� Scores':
-            self.scores_tab.refresh_data()
-        elif tab_text == '🛠️ Operator':
-            self.operator_tab.refresh_data()
-        elif tab_text == '🎮 Games':
-            self.games_tab.refresh_games_trees()
-        elif tab_text == '📝 Comment History':
-            self.comment_history_tab.refresh_comment_history()
+        # No longer need individual tab refresh calls here as refresh_all_data handles it
+        # if tab_text == '🏆 Scores':
+        #     self.scores_tab.refresh_data()
+        # elif tab_text == '🛠️ Operator':
+        #     self.operator_tab.refresh_data()
+        # elif tab_text == '🎮 Games':
+        #     self.games_tab.refresh_games_trees()
+        # elif tab_text == '📝 Comment History':
+        #     self.comment_history_tab.refresh_comment_history()
         
         self._last_tab = tab_text
 
     def view_comment_scheduled(self):
-        sel = self.scheduled_tree.selection()
+        sel = self.scheduled_tree.selection()#type: ignore
         if not sel:
             return
-        idx = int(self.scheduled_tree.item(sel[0])['values'][0])
+        idx = int(self.scheduled_tree.item(sel[0])['values'][0]) # type: ignore
         comment = get_match_comment_data(idx, self.schedule)
         messagebox.showinfo('Comment', comment if comment else 'No comment.')
 
@@ -1001,7 +1028,7 @@ class TournamentApp(tk.Tk):
             return
         idx = int(tree.item(sel[0])['values'][0])
         current = self.schedule['matches'][idx].get('referee', '')
-        new_ref = simpledialog.askstring('Edit Referee', f'Enter referee ({', '.join(REFEREES)}):', initialvalue=current)
+        new_ref = simpledialog.askstring('Edit Referee', f"Enter referee ({', '.join(REFEREES)}):", initialvalue=current)  
         if new_ref:
             self.schedule['matches'][idx]['referee'] = new_ref
             self.refresh_games_trees()

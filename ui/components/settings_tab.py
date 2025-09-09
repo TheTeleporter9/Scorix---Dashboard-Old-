@@ -5,14 +5,13 @@ Settings tab functionality for the tournament application.
 import tkinter as tk
 from tkinter import ttk, messagebox
 from .app_state import load_comp_display_settings, save_comp_display_settings, save_settings
-from data.socket_server import ScorexSocketServer
+from data.mongodb_client import run_server_in_thread as run_server
 
 class SettingsTab:
     def __init__(self, parent, app_state):
         self.parent = parent
         self.app_state = app_state
         self.settings = app_state.settings
-        self.server = ScorexSocketServer()
         self.create_widgets()
         
     def create_widgets(self):
@@ -155,8 +154,9 @@ class SettingsTab:
             try:
                 port = int(self.port_var.get())
                 host = '' if self.auto_ip_var.get() else self.ip_var.get()
-                self.server = ScorexSocketServer(host=host, port=port)
-                self.server.start_server(self.parent.winfo_toplevel())
+
+                run_server(port=5001)
+
             except ValueError:
                 messagebox.showerror("Error", "Invalid port number")
             except Exception as e:
@@ -164,8 +164,7 @@ class SettingsTab:
 
         def stop_server():
             if hasattr(self, 'server'):
-                self.server.stop_server()
-                messagebox.showinfo("Server Stopped", "TCP Server has been stopped")
+                messagebox.showinfo("Server Not stopped, please close the porgramm and try again", "TCP Server has been stopped")
 
         tk.Button(control_frame, text='Start Server', command=start_server,
                  bg='#4caf50', fg='white').pack(side='left', padx=5)
