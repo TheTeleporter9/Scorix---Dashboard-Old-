@@ -103,6 +103,10 @@ class GamesTab:
         # Sync scores and statuses from MongoDB
         if self.schedule:
             self.schedule = sync_scores_from_mongodb(self.schedule)
+
+        # If trees were not created due to no schedule, skip refresh
+        if self.scheduled_tree is None or self.completed_tree is None:
+            return
         
         filter_text = self.filter_var.get().lower() if hasattr(self, 'filter_var') else ''
         self.scheduled_tree.delete(*self.scheduled_tree.get_children())

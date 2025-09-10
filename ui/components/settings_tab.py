@@ -6,12 +6,15 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from .app_state import load_comp_display_settings, save_comp_display_settings, save_settings
 from data.mongodb_client import run_server_in_thread as run_server
+import random
 
 class SettingsTab:
-    def __init__(self, parent, app_state):
+    def __init__(self, parent, app_state, apply_theme_callback):
         self.parent = parent
         self.app_state = app_state
         self.settings = app_state.settings
+        self.apply_theme_callback = apply_theme_callback # Callback to apply theme to main app
+        self.theme_colors = ['#e3f2fd', '#fce4ec', '#fffde7', '#e8f5e9', '#ede7f6', '#fff3e0'] # Define available themes
         self.create_widgets()
         
     def create_widgets(self):
@@ -23,10 +26,14 @@ class SettingsTab:
         # Theme color
         tk.Label(self.parent, text='Theme Color:', bg=self.settings['theme_color']).pack(anchor='w', padx=20)
         color_var = tk.StringVar(value=self.settings.get('theme_color', '#e3f2fd'))
-        color_menu = ttk.Combobox(self.parent, textvariable=color_var, 
-                                values=['#e3f2fd', '#fce4ec', '#fffde7', '#e8f5e9', '#ede7f6', '#fff3e0'], 
+        self.color_menu = ttk.Combobox(self.parent, textvariable=color_var, 
+                                values=self.theme_colors, 
                                 state='readonly')
-        color_menu.pack(anchor='w', padx=40, pady=2)
+        self.color_menu.pack(anchor='w', padx=40, pady=2)
+
+        # Random Theme button
+        tk.Button(self.parent, text='🎲 Random Theme', command=self.set_random_theme,
+                bg='#a7c3d2', fg='black').pack(anchor='w', padx=40, pady=5)
 
         # Default matches per team
         tk.Label(self.parent, text='Default Matches per Team:', bg=self.settings['theme_color']).pack(anchor='w', padx=20)
@@ -104,7 +111,7 @@ class SettingsTab:
                 })
 
             # Apply the theme
-            self.app_state.apply_theme()
+            self.apply_theme_callback()
             messagebox.showinfo('Settings', 'Settings saved and theme applied!')
 
         tk.Button(self.parent, text='💾 Save Settings', command=save_and_apply,
@@ -170,3 +177,60 @@ class SettingsTab:
                  bg='#4caf50', fg='white').pack(side='left', padx=5)
         tk.Button(control_frame, text='Stop Server', command=stop_server,
                  bg='#f44336', fg='white').pack(side='left', padx=5)
+
+    def set_random_theme(self):
+        random_color = random.choice(self.theme_colors)
+        self.color_menu.set(random_color) # Update combobox
+        self.settings['theme_color'] = random_color # Update settings
+        save_settings(self.settings) # Save to file
+        self.apply_theme_callback() # Apply to main app
+        messagebox.showinfo('Theme', f'Random theme applied: {random_color}')
+
+    def apply_theme_to_widgets(self):
+        """Applies the current theme settings to all relevant widgets in the main application."""
+        if self.app_state.settings.get('dark_mode', False):
+            bg_color = '#23272e'
+            fg_color = '#f0f0f0'
+        else:
+            bg_color = self.app_state.get_setting('theme_color', '#e3f2fd')
+            fg_color = '#000000'
+        
+        # Configure ttk styles for themed widgets
+        style = ttk.Style()
+        style.theme_use('default') # Reset to default to avoid issues with other themes
+        style.configure('TNotebook', background=bg_color)
+        style.map('TNotebook.Tab', background=[('selected', bg_color)], foreground=[('selected', fg_color)])
+        style.configure('TCombobox', fieldbackground=bg_color, background=bg_color, foreground=fg_color)
+        style.map('TCombobox', fieldbackground=[('readonly', bg_color)])
+        
+        # Update background of the main window's content frame (assuming it's a Frame)
+        # The root window (self.parent.master) itself does not have a 'bg' option, 
+        # so we apply the background to its primary content frame if it exists.
+        # Instead of iterating through children here, we'll let the recursive update_widget_colors handle it
+        
+        # Update all frames and widgets within the parent
+        def update_widget_colors(widget):
+            if isinstance(widget, (tk.Label, tk.Button, tk.Checkbutton, tk.Radiobutton, tk.Entry, tk.Listbox, tk.Text, tk.LabelFrame)):
+                # These tk widgets support bg and fg
+                try:
+                    widget.configure(bg=bg_color, fg=fg_color)
+                except tk.TclError:
+                    pass
+            elif isinstance(widget, (tk.Frame, ttk.Frame)):
+                # tk.Frame and ttk.Frame support bg
+                try:
+                    widget.configure(bg=bg_color)
+                except tk.TclError:
+                    pass
+            elif isinstance(widget, (ttk.Notebook, ttk.Combobox, ttk.Treeview, ttk.Scrollbar)):
+                # ttk widgets are styled via ttk.Style, no direct bg/fg
+                pass
+            elif isinstance(widget, tk.Tk):
+                # The root Tk window doesn't support bg directly
+                pass
+            
+            # Recursively update children
+            for child in widget.winfo_children():
+                update_widget_colors(child)
+        
+        update_widget_colors(self.parent.master)

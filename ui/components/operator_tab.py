@@ -16,6 +16,8 @@ class OperatorTab:
         self.app_state = app_state
         self.schedule = app_state.schedule
         self.settings = app_state.settings
+        self.randomization_type = tk.StringVar(value="shuffle") # Default randomization type
+        self.random_seed = tk.StringVar(value="") # Seed for seeded randomization
         self.create_widgets()
         
     def refresh_data(self):
@@ -58,6 +60,26 @@ class OperatorTab:
                 command=self.set_num_matches).pack(side='left', padx=5)
         tk.Button(matches_frame, text='Auto-generate Schedule',
                 command=self.auto_generate_schedule).pack(side='left', padx=5)
+
+        # Randomization type selection
+        randomization_frame = tk.Frame(self.parent, bg=self.settings['theme_color'])
+        randomization_frame.pack(fill='x', padx=10, pady=5)
+        tk.Label(randomization_frame, text='Randomization Type:',
+                bg=self.settings['theme_color']).pack(side='left')
+        
+        randomization_options = ["shuffle", "seeded"]
+        self.randomization_combobox = ttk.Combobox(randomization_frame,
+                                                    textvariable=self.randomization_type,
+                                                    values=randomization_options,
+                                                    state="readonly")
+        self.randomization_combobox.pack(side='left', padx=5)
+        self.randomization_combobox.bind('<<ComboboxSelected>>', self.on_randomization_type_change)
+
+        self.seed_label = tk.Label(randomization_frame, text='Seed:',
+                                    bg=self.settings['theme_color'])
+        self.seed_entry = tk.Entry(randomization_frame, textvariable=self.random_seed, width=10)
+        
+        self.on_randomization_type_change() # Initialize visibility of seed widgets
 
         # Matches table
         matches_table_frame = tk.LabelFrame(self.parent, text='Scheduled Matches',
@@ -108,10 +130,19 @@ class OperatorTab:
         self.notes_text.delete('1.0', 'end')
         self.notes_text.insert('1.0', text)
 
+    def on_randomization_type_change(self, event=None):
+        if self.randomization_type.get() == "seeded":
+            self.seed_label.pack(side='left', padx=5)
+            self.seed_entry.pack(side='left', padx=5)
+        else:
+            self.seed_label.pack_forget()
+            self.seed_entry.pack_forget()
+
     def add_team(self, team_name):
         if not team_name.strip():
             return
-        add_team(team_name.strip(), self.schedule)
+        seed = int(self.random_seed.get()) if self.random_seed.get() else None
+        add_team(team_name.strip(), self.schedule, self.randomization_type.get(), seed)
         self.refresh_teams_listbox()
         self.refresh_matches_tree()
 
@@ -120,20 +151,26 @@ class OperatorTab:
         if not selection:
             return
         team = self.teams_listbox.get(selection[0])
-        remove_team(team, self.schedule)
+        seed = int(self.random_seed.get()) if self.random_seed.get() else None
+        remove_team(team, self.schedule, self.randomization_type.get(), seed)
         self.refresh_teams_listbox()
         self.refresh_matches_tree()
 
     def set_num_matches(self):
         try:
             n = int(self.num_matches_var.get())
-            set_num_matches(n, self.schedule)
+            seed = int(self.random_seed.get()) if self.random_seed.get() else None
+            set_num_matches(self.schedule, n, self.randomization_type.get(), seed)
             self.refresh_matches_tree()
         except ValueError:
-            messagebox.showerror('Error', 'Invalid number of matches')
+            messagebox.showerror('Error', 'Invalid number of matches or seed')
 
     def auto_generate_schedule(self):
-        generate_round_robin(self.schedule)
+        seed = int(self.random_seed.get()) if self.random_seed.get() else None
+        generate_round_robin(self.schedule['teams'],
+                             self.num_matches_var.get(),
+                             self.randomization_type.get(),
+                             seed)
         self.refresh_matches_tree()
 
     def save_schedule(self):

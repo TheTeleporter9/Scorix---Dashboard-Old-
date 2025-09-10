@@ -68,16 +68,22 @@ def save_schedule(schedule):
     with open(SCHEDULE_FILE, 'w') as f:
         json.dump(schedule, f, indent=2)
 
-def generate_round_robin(teams, num_matches=1, randomize=True):
+def generate_round_robin(teams, num_matches=1, randomization_type="shuffle", seed: Optional[int] = None):
     matches = []
     for _ in range(num_matches):
         for t1, t2 in combinations(teams, 2):
-            matches.append({'team1': t1, 'team2': t2, 'played': False, 'penalty_team1': False, 'penalty_team2': False, 'comments': '', 'comment_history': []})
-    if randomize and num_matches > 2:
-        random.shuffle(matches)
+            matches.append({'team1': t1, 'team2': t2, 'played': False, 'penalty_team1': False, 'penalty_team2': False, 'comments': '', 'comment_history': [], 'created': datetime.now().isoformat()}) # Added 'created' field
+
+    if randomization_type == "shuffle":
+        if num_matches > 2:
+            random.shuffle(matches)
+    elif randomization_type == "seeded":
+        if num_matches > 2 and seed is not None:
+            random.seed(seed)
+            random.shuffle(matches)
     return matches
 
-def add_team(team_name, schedule, randomize=True):
+def add_team(team_name, schedule, randomization_type="shuffle", seed: Optional[int] = None):
     """Add a team to the schedule"""
     if not isinstance(schedule, dict):
         schedule = load_schedule()
@@ -86,10 +92,10 @@ def add_team(team_name, schedule, randomize=True):
             schedule['teams'] = []
         schedule['teams'].append(team_name)
         num_matches = len(schedule.get('matches', [])) // (len(schedule['teams']) * (len(schedule['teams']) - 1) // 2) if len(schedule['teams']) > 1 else 1
-        schedule['matches'] = generate_round_robin(schedule['teams'], num_matches, randomize)
+        schedule['matches'] = generate_round_robin(schedule['teams'], num_matches, randomization_type, seed)
         save_schedule(schedule)
 
-def remove_team(team_name, schedule, randomize=True):
+def remove_team(team_name, schedule, randomization_type="shuffle", seed: Optional[int] = None):
     """Remove a team from the schedule"""
     if not isinstance(schedule, dict):
         schedule = load_schedule()
@@ -98,7 +104,7 @@ def remove_team(team_name, schedule, randomize=True):
     if team_name in schedule['teams']:
         schedule['teams'].remove(team_name)
         num_matches = len(schedule.get('matches', [])) // (len(schedule['teams']) * (len(schedule['teams']) - 1) // 2) if len(schedule['teams']) > 1 else 1
-        schedule['matches'] = generate_round_robin(schedule['teams'], num_matches, randomize)
+        schedule['matches'] = generate_round_robin(schedule['teams'], num_matches, randomization_type, seed)
         save_schedule(schedule)
 
 def set_match_comment_data(idx, comment, schedule):
@@ -145,8 +151,8 @@ def get_num_matches(schedule):
     n = len([m for m in schedule['matches'] if m['team1'] == teams[0]])
     return max(1, n)
 
-def set_num_matches(schedule, num_matches, randomize=True):
-    schedule['matches'] = generate_round_robin(schedule['teams'], num_matches, randomize)
+def set_num_matches(schedule, num_matches, randomization_type="shuffle", seed: Optional[int] = None):
+    schedule['matches'] = generate_round_robin(schedule['teams'], num_matches, randomization_type, seed)
 
 def get_match(schedule, idx):
     return schedule['matches'][idx]
